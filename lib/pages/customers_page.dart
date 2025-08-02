@@ -47,3 +47,112 @@ class _CustomersPageState extends State<CustomersPage> {
   void _closeDetails() {
     _clearForm();
   }
+  /// Loads all customers from the database.
+  /// Updates the UI with loading state and error handling.
+  Future<void> _loadCustomers() async {
+    setState(() => _isLoading = true);
+    try {
+      final customers = await _repository.getAllCustomers();
+      setState(() {
+        _customers = customers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showSnackBar('Error loading customers: $e');
+    }
+  }
+  /// Loads previously saved customer data from encrypted storage.
+  /// Used for the "copy previous" feature.
+  Future<void> _loadPreviousCustomerData() async {
+    try {
+      final firstName = await _prefs.getString('prev_first_name') ?? '';
+      final lastName = await _prefs.getString('prev_last_name') ?? '';
+      final address = await _prefs.getString('prev_address') ?? '';
+      final dateOfBirth = await _prefs.getString('prev_date_of_birth') ?? '';
+
+      if (firstName.isNotEmpty) {
+        _firstNameController.text = firstName;
+        _lastNameController.text = lastName;
+        _addressController.text = address;
+        _dateOfBirthController.text = dateOfBirth;
+      }
+    } catch (e) {
+      debugPrint('Error loading previous customer data: $e');
+    }
+  }
+  /// Saves current customer data to encrypted storage.
+  /// Stores data for future "copy previous" use.
+  Future<void> _savePreviousCustomerData() async {
+    try {
+      await _prefs.setString('prev_first_name', _firstNameController.text);
+      await _prefs.setString('prev_last_name', _lastNameController.text);
+      await _prefs.setString('prev_address', _addressController.text);
+      await _prefs.setString('prev_date_of_birth', _dateOfBirthController.text);
+    } catch (e) {
+      debugPrint('Error saving previous customer data: $e');
+    }
+  }
+
+  /// Validates all form fields are filled out.
+  /// Shows error dialog if validation fails.
+  /// Returns true if all fields are valid.
+  bool _validateFields() {
+    final localizations = AppLocalizations.of(context);
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty ||
+        _addressController.text.trim().isEmpty ||
+        _dateOfBirthController.text.trim().isEmpty) {
+      _showAlertDialog(
+          localizations?.translate('validation_error') ?? 'Validation Error',
+          localizations?.translate('all_fields_required') ?? 'All fields must be filled out.'
+      );
+      return false;
+    }
+    return true;
+  }
+  /// Adds a new customer to the database.
+  /// Validates form, saves customer, and refreshes the list.
+  Future<void> _addCustomer() async {
+    if (!_validateFields()) return;
+    final customer = Customer(
+      id: null,
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      address: _addressController.text.trim(),
+      dateOfBirth: _dateOfBirthController.text.trim(),
+    );
+    try {
+      await _repository.insertCustomer(customer);
+      await _savePreviousCustomerData();
+      _clearForm();
+      _loadCustomers();
+      final localizations = AppLocalizations.of(context);
+      _showSnackBar(localizations?.translate('customer_added') ?? 'Customer added successfully!');
+    } catch (e) {
+      _showSnackBar('Error adding customer: $e');
+    }
+  }
+  /// Updates the currently selected customer.
+  /// Validates form, updates database, and refreshes the list.
+  Future<void> _updateCustomer() async {
+    if (_selectedCustomer == null || !_validateFields()) return;
+
+    final customer = Customer(
+      id: _selectedCustomer!.id,
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      address: _addressController.text.trim(),
+      dateOfBirth: _dateOfBirthController.text.trim(),
+    );
+
+    try {
+      await _repository.updateCustomer(customer);
+      _clearForm();
+      _loadCustomers();
+      final localizations = AppLocalizations.of(context);
+      _showSnackBar(localizations?.translate('customer_updated') ?? 'Customer updated successfully!');
+    } catch (e) {
+      _showSnackBar('Error updating customer: $e');
+    }
+  }
