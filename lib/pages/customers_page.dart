@@ -156,3 +156,121 @@ class _CustomersPageState extends State<CustomersPage> {
       _showSnackBar('Error updating customer: $e');
     }
   }
+  /// Deletes the currently selected customer.
+  /// Removes from database and refreshes the list.
+  Future<void> _deleteCustomer() async {
+    if (_selectedCustomer == null) return;
+
+    try {
+      await _repository.deleteCustomer(_selectedCustomer!.id!);
+      _clearForm();
+      _loadCustomers();
+      final localizations = AppLocalizations.of(context);
+      _showSnackBar(localizations?.translate('customer_deleted') ?? 'Customer deleted successfully!');
+    } catch (e) {
+      _showSnackBar('Error deleting customer: $e');
+    }
+  }
+
+  /// Clears all form fields and resets selection state.
+  void _clearForm() {
+    _firstNameController.clear();
+    _lastNameController.clear();
+    _addressController.clear();
+    _dateOfBirthController.clear();
+    setState(() {
+      _selectedCustomer = null;
+      _isAddingNew = false;
+    });
+  }
+
+  /// Shows dialog asking to copy previous data or start blank.
+  void _showCopyDataDialog() {
+    final localizations = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(localizations?.translate('copy_previous_data') ?? 'Copy Previous Data'),
+          content: Text(localizations?.translate('copy_previous_question') ??
+              'Would you like to copy fields from the previous customer or start with a blank page?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                _clearForm();
+                setState(() => _isAddingNew = true);
+                Navigator.of(context).pop();
+              },
+              child: Text(localizations?.translate('blank_page') ?? 'Blank Page'),
+            ),
+            TextButton(
+              onPressed: () {
+                _loadPreviousCustomerData();
+                setState(() => _isAddingNew = true);
+                Navigator.of(context).pop();
+              },
+              child: Text(localizations?.translate('copy_previous_short') ?? 'Copy Previous'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Shows help dialog with usage instructions.
+  void _showHelpDialog() {
+    final localizations = AppLocalizations.of(context);
+    _showAlertDialog(
+      localizations?.translate('help') ?? 'Customer Management Help',
+      localizations?.translate('help_content') ??
+          'Instructions:\n\n'
+              '• Tap "+" to add a new customer\n'
+              '• Fill out all required fields\n'
+              '• Select a customer from the list to view/edit details\n'
+              '• Use Update button to save changes\n'
+              '• Use Delete button to remove customer\n'
+              '• Choose to copy previous data or start blank',
+    );
+  }
+
+  /// Shows language selection dialog.
+  void _showLanguageDialog() {
+    final localizations = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(localizations?.translate('language') ?? 'Language'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(localizations?.translate('english') ?? 'English'),
+                leading: const Text('🇺🇸'),
+                onTap: () {
+                  MyApp.setLocale(context, const Locale('en', ''));
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text(localizations?.translate('french') ?? 'French'),
+                leading: const Text('🇫🇷'),
+                onTap: () {
+                  MyApp.setLocale(context, const Locale('fr', ''));
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                title: Text(localizations?.translate('spanish') ?? 'Spanish'),
+                leading: const Text('🇪🇸'),
+                onTap: () {
+                  MyApp.setLocale(context, const Locale('es', ''));
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
