@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pages/customers_page.dart';
 // TODO: Teammates will uncomment these when they add their files
-// import 'pages/airplanes_page.dart';
+import 'pages/airplanes_page.dart';
 // import 'pages/flights_page.dart';
 // import 'pages/reservations_page.dart';
 import 'utils/localizations.dart';
@@ -196,7 +196,7 @@ class MainPage extends StatelessWidget {
                   Icons.flight,
                   'Coming Soon - Teammate Module',
                 ),
-                /* TODO: Uncomment when teammate adds airplanes_page.dart
+
                 _buildNavigationButton(
                   context,
                   localizations?.translate('airplane_list') ?? 'Airplane List',
