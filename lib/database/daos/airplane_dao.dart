@@ -1,30 +1,30 @@
 import 'package:floor/floor.dart';
 import '../../models/airplane.dart';
 
-/// Database operations for airplanes
+/// Data Access Object (DAO) for Airplane entity
+/// Provides methods to interact with the Airplane table in the database
+/// This interface defines the methods for querying and manipulating Airplane data
+/// It includes methods for finding all airplanes, finding an airplane by ID,
+/// inserting a new airplane, updating an existing airplane, deleting an airplane,
+/// and getting the count of airplanes in the database.
 @dao
 abstract class AirplaneDao {
-  /// Get all airplanes
+  
   @Query('SELECT * FROM Airplane')
-  Future<List<Airplane>> getAll();
-
-  /// Get airplane by id
+  Future<List<Airplane>> findAllAirplanes();
+  
   @Query('SELECT * FROM Airplane WHERE id = :id')
-  Future<Airplane?> getById(int id);
-
-  /// Add new airplane
+  Future<Airplane?> findAirplaneById(int id);
+  
   @insert
-  Future<void> add(Airplane plane);
-
-  /// Update airplane
+  Future<void> insertAirplane(Airplane airplane);
+  
   @update
-  Future<void> update(Airplane plane);
-
-  /// Delete airplane by id
+  Future<void> updateAirplane(Airplane airplane);
+  
   @Query('DELETE FROM Airplane WHERE id = :id')
-  Future<void> remove(int id);
-
-  /// Count all airplanes
+  Future<void> delete(int id);
+  
   @Query('SELECT COUNT(*) FROM Airplane')
-  Future<int?> count();
+  Future<int?> getAirplaneCount();
 }
