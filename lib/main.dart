@@ -189,14 +189,6 @@ class MainPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // TODO: Teammates will uncomment these when they add their files
-                _buildDisabledButton(
-                  context,
-                  localizations?.translate('airplane_list') ?? 'Airplane List',
-                  Icons.flight,
-                  'Coming Soon - Teammate Module',
-                ),
-
                 _buildNavigationButton(
                   context,
                   localizations?.translate('airplane_list') ?? 'Airplane List',
@@ -206,7 +198,6 @@ class MainPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const AirplanesPage()),
                   ),
                 ),
-                */
                 const SizedBox(height: 20),
 
                 _buildDisabledButton(
