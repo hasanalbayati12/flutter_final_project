@@ -2,101 +2,118 @@ import '../models/airplane.dart';
 import '../database/database.dart';
 import '../database/daos/airplane_dao.dart';
 
-/// Repository for airplane data operations
+/// Repository class for managing the Airplanes data operations
 class AirplaneRepository {
-  late AirplaneDao _dao;
-  bool _init = false;
+  late AirplaneDao _airplaneDao;
+  bool _initialized = false;
 
-  /// Initialize database connection
-  Future<void> _initDb() async {
-    if (!_init) {
-      final db = await AppDatabase.getInstance();
-      _dao = db.airplaneDao;
-      _init = true;
+  /// Initialize db connection
+  Future<void> _initializeDatabase() async {
+    if (!_initialized) {
+      final database = await AppDatabase.getInstance();
+      _airplaneDao = database.airplaneDao;
+      _initialized = true;
     }
   }
 
-  /// Insert new airplane
-  Future<int> insertAirplane(Airplane plane) async {
+ /// Inserts a new airplane into the database
+  /// [airplane] - Airplane object to insert
+  /// Returns the auto-generated ID of the inserted airplane
+  /// Throws exception if insertion fails
+  Future<int> insertAirplane(Airplane airplane) async {
     try {
-      await _initDb();
-      await _dao.add(plane);
-      final planes = await _dao.getAll();
-      return planes.isNotEmpty ? planes.last.id! : 0;
+      await _initializeDatabase();
+
+      // Validate airplane data before insertion
+      final airplanes = await _airplaneDao.findAllAirplanes();
+      return airplanes.isNotEmpty ? airplanes.last.id! : 0;
     } catch (e) {
-      throw Exception('Failed to insert plane: $e');
+      throw Exception('Failed to insert airplane: $e');
     }
   }
 
-  /// Get all airplanes
+/// Retrieves all airplanes from the database
+  /// Returns a list of Airplane objects
+  /// Throws exception if retrieval fails
   Future<List<Airplane>> getAllAirplanes() async {
     try {
-      await _initDb();
-      return await _dao.getAll();
+      await _initializeDatabase();
+      final airplanes = await _airplaneDao.findAllAirplanes();
+      return airplanes;
     } catch (e) {
-      throw Exception('Failed to get planes: $e');
+      throw Exception('Failed to retrieve airplanes: $e');
     }
   }
 
-  /// Get airplane by ID
+  /// Retrieves an airplane by ID
+  /// [id] - ID of the airplane to retrieve
+  /// Returns an Airplane object if found, null if not found
+  /// Throws exception if retrieval fails
   Future<Airplane?> getAirplaneById(int id) async {
     try {
-      await _initDb();
-      return await _dao.getById(id);
+      await _initializeDatabase();
+      return await _airplaneDao.findAirplaneById(id);
     } catch (e) {
-      throw Exception('Failed to get plane by ID: $e');
+      throw Exception('Failed to retrieve airplane by ID: $e');
     }
   }
 
-  /// Update airplane
-  Future<int> updateAirplane(Airplane plane) async {
+  /// Updates an existing airplane in the database
+  /// [airplane] - Airplane object with updated data
+  /// Returns 1 if update successful, throws exception if update fails
+  Future<int> updateAirplane(Airplane airplane) async {
     try {
-      await _initDb();
-      if (plane.id == null) {
-        throw Exception('Cannot update plane: ID is null');
+      await _initializeDatabase();
+      if (airplane.id == null) {
+        throw Exception('Cannot update airplane: ID is null');
       }
-      await _dao.update(plane);
+      await _airplaneDao.updateAirplane(airplane);
       return 1;
     } catch (e) {
-      throw Exception('Failed to update plane: $e');
+      throw Exception('Failed to update airplane: $e');
     }
   }
 
-  /// Delete airplane
+  /// Deletes an airplane by ID
+  /// [id] - ID of the airplane to delete
+  /// Returns 1 if deletion successful, throws exception if deletion fails
   Future<int> deleteAirplane(int id) async {
     try {
-      await _initDb();
-      await _dao.remove(id);
+      await _initializeDatabase();
+      await _airplaneDao.delete(id);
       return 1;
     } catch (e) {
-      throw Exception('Failed to delete plane: $e');
+      throw Exception('Failed to delete airplane: $e');
     }
   }
 
-  /// Get airplane count
+  /// Gets the count of all airplanes in the database
+  /// Returns the count as an integer, or 0 if no airplanes exist
   Future<int> getAirplaneCount() async {
     try {
-      await _initDb();
-      return await _dao.count() ?? 0;
+      await _initializeDatabase();
+      return await _airplaneDao.getAirplaneCount() ?? 0;
     } catch (e) {
-      throw Exception('Failed to get plane count: $e');
+      throw Exception('Failed to get airplane count: $e');
     }
   }
 
-  /// Validate airplane data
-  bool validateAirplane(Airplane plane) {
-    if (plane.type.trim().isEmpty) {
-      throw Exception('Plane type cannot be empty');
+  /// Validates the Airplane object before insertion or update
+  /// Throws an exception if validation fails
+  bool validateAirplane(Airplane airplane) {
+    if (airplane.airplaneType.trim().isEmpty) {
+      throw Exception('Airplane type cannot be empty');
     }
-    if (plane.seats <= 0) {
-      throw Exception('Seat count must be greater than 0');
+    if (airplane.passengers <= 0) {
+      throw Exception('Passenger count must be greater than 0');
     }
-    if (plane.speed.trim().isEmpty) {
-      throw Exception('Speed cannot be empty');
+    if (airplane.maxSpeed.trim().isEmpty) {
+      throw Exception('Maximum speed cannot be empty');
     }
-    if (plane.range.trim().isEmpty) {
-      throw Exception('Range cannot be empty');
+    if (airplane.rangeDistance.trim().isEmpty) {
+      throw Exception('Range distance cannot be empty');
     }
+
     return true;
   }
 }
