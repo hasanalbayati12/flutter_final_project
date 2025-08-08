@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pages/customers_page.dart';
 // TODO: Teammates will uncomment these when they add their files
 import 'pages/airplanes_page.dart';
-// import 'pages/flights_page.dart';
+import 'pages/flights_page.dart';
 // import 'pages/reservations_page.dart';
 import 'utils/localizations.dart';
 
@@ -189,14 +189,6 @@ class MainPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // TODO: Teammates will uncomment these when they add their files
-                _buildDisabledButton(
-                  context,
-                  localizations?.translate('airplane_list') ?? 'Airplane List',
-                  Icons.flight,
-                  'Coming Soon - Teammate Module',
-                ),
-
                 _buildNavigationButton(
                   context,
                   localizations?.translate('airplane_list') ?? 'Airplane List',
@@ -206,16 +198,9 @@ class MainPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const AirplanesPage()),
                   ),
                 ),
-                */
                 const SizedBox(height: 20),
 
-                _buildDisabledButton(
-                  context,
-                  localizations?.translate('flights_list') ?? 'Flights List',
-                  Icons.flight_takeoff,
-                  'Coming Soon - Teammate Module',
-                ),
-                /* TODO: Uncomment when teammate adds flights_page.dart
+
                 _buildNavigationButton(
                   context,
                   localizations?.translate('flights_list') ?? 'Flights List',
@@ -225,7 +210,7 @@ class MainPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const FlightsPage()),
                   ),
                 ),
-                */
+
                 const SizedBox(height: 20),
 
                 _buildDisabledButton(

@@ -24,6 +24,8 @@ class AirplaneRepository {
     try {
       await _initializeDatabase();
 
+      await _airplaneDao.insertAirplane(airplane);
+
       // Validate airplane data before insertion
       final airplanes = await _airplaneDao.findAllAirplanes();
       return airplanes.isNotEmpty ? airplanes.last.id! : 0;
