@@ -6,16 +6,19 @@ import '../models/customer.dart';
 import 'daos/customer_dao.dart';
 import '../models/airplane.dart';
 import 'daos/airplane_dao.dart';
+import '../models/flight.dart';
+import 'daos/flight_dao.dart';
 
 part 'database.g.dart';
 
 /// Main database class for the Customer Management module.
 /// Uses Floor SQLite for data persistence following assignment requirements.
-@Database(version: 1, entities: [Customer, Airplane])
+@Database(version: 1, entities: [Customer, Airplane, Flight])
 abstract class AppDatabase extends FloorDatabase {
   /// Provides access to customer database operations.
   CustomerDao get customerDao;
   AirplaneDao get airplaneDao;
+  FlightDao get flightDao;
 
   /// Singleton instance for database access.
   static AppDatabase? _instance;
