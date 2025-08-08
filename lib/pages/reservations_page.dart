@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:encrypted_shared_preferences/encrypted_shared_preferences.dart';
-import '../models/flight.dart';
-import '../repositories/flight_repository.dart';
+import '../models/reservation.dart';
+import '../repositories/reservation_repository.dart';
 import '../utils/localizations.dart';
 import '../main.dart';
 
-/// Flight management page implementing all CST2335 assignment requirements.
+/// Reservation management page implementing all CST2335 assignment requirements.
 ///
-/// This page provides complete CRUD functionality for flight management with:
+/// This page provides complete CRUD functionality for reservation management with:
 /// - ListView displaying user-inserted records (Requirement 1)
 /// - TextField and Button for data entry (Requirement 2)
 /// - Floor database persistence (Requirement 3)
@@ -18,40 +18,40 @@ import '../main.dart';
 /// - Multi-language support (Requirement 8)
 /// - Professional UI design (Requirement 10)
 /// - Comprehensive documentation (Requirement 11)
-class FlightsPage extends StatefulWidget {
-  const FlightsPage({super.key});
+class ReservationsPage extends StatefulWidget {
+  const ReservationsPage({super.key});
 
   @override
-  State<FlightsPage> createState() => _FlightsPageState();
+  State<ReservationsPage> createState() => _ReservationsPageState();
 }
 
-class _FlightsPageState extends State<FlightsPage> {
-  final FlightRepository _repository = FlightRepository();
+class _ReservationsPageState extends State<ReservationsPage> {
+  final ReservationRepository _repository = ReservationRepository();
   final EncryptedSharedPreferences _prefs = EncryptedSharedPreferences();
 
-  List<Flight> _flights = [];
-  Flight? _selectedFlight;
+  List<Reservation> _reservations = [];
+  Reservation? _selectedReservation;
   bool _isLoading = true;
-  bool _isAddingNew = false; // Track if we're adding a new flight
+  bool _isAddingNew = false; // Track if we're adding a new reservation
 
   // Form controllers
-  final TextEditingController _departureCityController = TextEditingController();
-  final TextEditingController _destinationCityController = TextEditingController();
-  final TextEditingController _departureTimeController = TextEditingController();
-  final TextEditingController _arrivalTimeController = TextEditingController();
+  final TextEditingController _customerIdController = TextEditingController();
+  final TextEditingController _flightIdController = TextEditingController();
+  final TextEditingController _flightDateController = TextEditingController();
+  final TextEditingController _reservationNameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _loadFlights();
+    _loadReservations();
   }
 
   @override
   void dispose() {
-    _departureCityController.dispose();
-    _destinationCityController.dispose();
-    _departureTimeController.dispose();
-    _arrivalTimeController.dispose();
+    _customerIdController.dispose();
+    _flightIdController.dispose();
+    _flightDateController.dispose();
+    _reservationNameController.dispose();
     super.dispose();
   }
 
@@ -60,7 +60,13 @@ class _FlightsPageState extends State<FlightsPage> {
     _clearForm();
   }
 
-  /// Loads all flights from database following assignment slide patterns.
+  /// Starts adding a new reservation (for portrait mode)
+  void _startAddingReservation() {
+    _clearForm();
+    setState(() => _isAddingNew = true);
+  }
+
+  /// Loads all reservations from database following assignment slide patterns.
   ///
   /// Implements the ListView initialization pattern from course slides:
   /// 1. Sets loading state for user feedback
@@ -70,178 +76,195 @@ class _FlightsPageState extends State<FlightsPage> {
   ///
   /// Called in initState() and after CRUD operations to maintain
   /// ListView synchronization with database as demonstrated in slides.
-  Future<void> _loadFlights() async {
+  Future<void> _loadReservations() async {
     setState(() => _isLoading = true);
     try {
-      final flights = await _repository.getAllFlights();
+      final reservations = await _repository.getAllReservations();
       setState(() {
-        _flights = flights;
+        _reservations = reservations;
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar('Error loading flights: $e');
+      _showSnackBar('Error loading reservations: $e');
     }
   }
 
-  /// Loads previous flight data from EncryptedSharedPreferences.
+  /// Loads previous reservation data from EncryptedSharedPreferences.
   ///
   /// This implements Requirement 6 by allowing users to quickly populate
-  /// form fields with data from the previously added flight, reducing
+  /// form fields with data from the previously added reservation, reducing
   /// repetitive data entry as specified in the assignment.
-  Future<void> _loadPreviousFlightData() async {
+  Future<void> _loadPreviousReservationData() async {
     try {
-      final departureCity = await _prefs.getString('prev_departure_city') ?? '';
-      final destinationCity = await _prefs.getString('prev_destination_city') ?? '';
-      final departureTime = await _prefs.getString('prev_departure_time') ?? '';
-      final arrivalTime = await _prefs.getString('prev_arrival_time') ?? '';
+      final customerId = await _prefs.getString('prev_customer_id') ?? '';
+      final flightId = await _prefs.getString('prev_flight_id') ?? '';
+      final flightDate = await _prefs.getString('prev_flight_date') ?? '';
+      final reservationName = await _prefs.getString('prev_reservation_name') ?? '';
 
-      if (departureCity.isNotEmpty) {
-        _departureCityController.text = departureCity;
-        _destinationCityController.text = destinationCity;
-        _departureTimeController.text = departureTime;
-        _arrivalTimeController.text = arrivalTime;
+      if (customerId.isNotEmpty) {
+        _customerIdController.text = customerId;
+        _flightIdController.text = flightId;
+        _flightDateController.text = flightDate;
+        _reservationNameController.text = reservationName;
       }
     } catch (e) {
-      debugPrint('Error loading previous flight data: $e');
+      debugPrint('Error loading previous reservation data: $e');
     }
   }
 
-  /// Saves flight data to EncryptedSharedPreferences.
+  /// Saves reservation data to EncryptedSharedPreferences.
   ///
-  /// This data can be retrieved later when adding a new flight to
+  /// This data can be retrieved later when adding a new reservation to
   /// pre-populate form fields with similar information, implementing
   /// the "copy previous data" feature required by the assignment.
-  Future<void> _savePreviousFlightData() async {
+  Future<void> _savePreviousReservationData() async {
     try {
-      await _prefs.setString('prev_departure_city', _departureCityController.text);
-      await _prefs.setString('prev_destination_city', _destinationCityController.text);
-      await _prefs.setString('prev_departure_time', _departureTimeController.text);
-      await _prefs.setString('prev_arrival_time', _arrivalTimeController.text);
+      await _prefs.setString('prev_customer_id', _customerIdController.text);
+      await _prefs.setString('prev_flight_id', _flightIdController.text);
+      await _prefs.setString('prev_flight_date', _flightDateController.text);
+      await _prefs.setString('prev_reservation_name', _reservationNameController.text);
     } catch (e) {
-      debugPrint('Error saving previous flight data: $e');
+      debugPrint('Error saving previous reservation data: $e');
     }
   }
 
-  /// Validates flight form fields per assignment requirements.
+  /// Validates reservation form fields per assignment requirements.
   ///
-  /// Checks all required fields for flight topic:
-  /// - Departure city: Must not be empty (e.g., "London", "Toronto")
-  /// - Destination city: Must not be empty (e.g., "New York", "Paris")
-  /// - Departure time: Must not be empty (24-hour format: "14:30")
-  /// - Arrival time: Must not be empty (24-hour format: "18:45")
+  /// Checks all required fields for reservation topic:
+  /// - Customer ID: Must be valid positive integer (references existing customer)
+  /// - Flight ID: Must be valid positive integer (references existing flight)
+  /// - Flight date: Must not be empty (YYYY-MM-DD format: "2025-07-15")
+  /// - Reservation name: Must not be empty (e.g., "Summer Holiday", "Business Trip")
   ///
   /// Shows AlertDialog on validation failure (Requirement 5).
   /// Returns true if all fields valid, false otherwise.
   bool _validateFields() {
     final localizations = AppLocalizations.of(context);
-    if (_departureCityController.text.trim().isEmpty ||
-        _destinationCityController.text.trim().isEmpty ||
-        _departureTimeController.text.trim().isEmpty ||
-        _arrivalTimeController.text.trim().isEmpty) {
+    if (_customerIdController.text.trim().isEmpty ||
+        _flightIdController.text.trim().isEmpty ||
+        _flightDateController.text.trim().isEmpty ||
+        _reservationNameController.text.trim().isEmpty) {
       _showAlertDialog(
           localizations?.translate('validation_error') ?? 'Validation Error',
           localizations?.translate('all_fields_required') ?? 'All fields must be filled out.'
       );
       return false;
     }
+
+    if (int.tryParse(_customerIdController.text.trim()) == null) {
+      _showAlertDialog(
+          localizations?.translate('validation_error') ?? 'Validation Error',
+          'Customer ID must be a valid number.'
+      );
+      return false;
+    }
+
+    if (int.tryParse(_flightIdController.text.trim()) == null) {
+      _showAlertDialog(
+          localizations?.translate('validation_error') ?? 'Validation Error',
+          'Flight ID must be a valid number.'
+      );
+      return false;
+    }
+
     return true;
   }
 
-  /// Adds a new flight to the database following the assignment pattern.
+  /// Adds a new reservation to the database following the assignment pattern.
   ///
   /// Implements the CRUD operation pattern from course slides:
   /// 1. Validates form fields
-  /// 2. Creates new Flight object
+  /// 2. Creates new Reservation object
   /// 3. Saves to database using repository
   /// 4. Updates SharedPreferences for next use
   /// 5. Refreshes ListView
   /// 6. Shows success feedback via Snackbar
-  Future<void> _addFlight() async {
+  Future<void> _addReservation() async {
     if (!_validateFields()) return;
 
-    final flight = Flight(
-      departureCity: _departureCityController.text.trim(),
-      destinationCity: _destinationCityController.text.trim(),
-      departureTime: _departureTimeController.text.trim(),
-      arrivalTime: _arrivalTimeController.text.trim(),
+    final reservation = Reservation(
+      customerId: int.parse(_customerIdController.text.trim()),
+      flightId: int.parse(_flightIdController.text.trim()),
+      flightDate: _flightDateController.text.trim(),
+      reservationName: _reservationNameController.text.trim(),
     );
 
     try {
-      await _repository.insertFlight(flight);
-      await _savePreviousFlightData();
+      await _repository.insertReservation(reservation);
+      await _savePreviousReservationData();
       _clearForm();
-      _loadFlights();
+      _loadReservations();
       final localizations = AppLocalizations.of(context);
-      _showSnackBar(localizations?.translate('flight_added') ?? 'Flight added successfully!');
+      _showSnackBar(localizations?.translate('reservation_added') ?? 'Reservation created successfully!');
     } catch (e) {
-      _showSnackBar('Error adding flight: $e');
+      _showSnackBar('Error creating reservation: $e');
     }
   }
 
-  /// Updates an existing flight in the database.
+  /// Updates an existing reservation in the database.
   ///
-  /// Validates form fields and updates the currently selected flight
+  /// Validates form fields and updates the currently selected reservation
   /// with new data. Shows success message via Snackbar on completion.
-  Future<void> _updateFlight() async {
-    if (_selectedFlight == null || !_validateFields()) return;
+  Future<void> _updateReservation() async {
+    if (_selectedReservation == null || !_validateFields()) return;
 
-    final flight = Flight(
-      id: _selectedFlight!.id,
-      departureCity: _departureCityController.text.trim(),
-      destinationCity: _destinationCityController.text.trim(),
-      departureTime: _departureTimeController.text.trim(),
-      arrivalTime: _arrivalTimeController.text.trim(),
+    final reservation = Reservation(
+      id: _selectedReservation!.id,
+      customerId: int.parse(_customerIdController.text.trim()),
+      flightId: int.parse(_flightIdController.text.trim()),
+      flightDate: _flightDateController.text.trim(),
+      reservationName: _reservationNameController.text.trim(),
     );
 
     try {
-      await _repository.updateFlight(flight);
+      await _repository.updateReservation(reservation);
       _clearForm();
-      _loadFlights();
+      _loadReservations();
       final localizations = AppLocalizations.of(context);
-      _showSnackBar(localizations?.translate('flight_updated') ?? 'Flight updated successfully!');
+      _showSnackBar(localizations?.translate('reservation_updated') ?? 'Reservation updated successfully!');
     } catch (e) {
-      _showSnackBar('Error updating flight: $e');
+      _showSnackBar('Error updating reservation: $e');
     }
   }
 
-  /// Deletes the currently selected flight from the database.
+  /// Deletes the currently selected reservation from the database.
   ///
-  /// Removes the flight from database and refreshes the flight list.
+  /// Removes the reservation from database and refreshes the reservation list.
   /// Shows success message via Snackbar on completion.
-  Future<void> _deleteFlight() async {
-    if (_selectedFlight == null) return;
+  Future<void> _deleteReservation() async {
+    if (_selectedReservation == null) return;
 
     try {
-      await _repository.deleteFlight(_selectedFlight!.id!);
+      await _repository.deleteReservation(_selectedReservation!.id!);
       _clearForm();
-      _loadFlights();
+      _loadReservations();
       final localizations = AppLocalizations.of(context);
-      _showSnackBar(localizations?.translate('flight_deleted') ?? 'Flight deleted successfully!');
+      _showSnackBar(localizations?.translate('reservation_deleted') ?? 'Reservation cancelled successfully!');
     } catch (e) {
-      _showSnackBar('Error deleting flight: $e');
+      _showSnackBar('Error cancelling reservation: $e');
     }
   }
 
-  /// Clears all form fields and resets the selected flight state.
+  /// Clears all form fields and resets the selected reservation state.
   /// This method is used to reset the form when navigating away from
   /// the details view or after completing CRUD operations.
   void _clearForm() {
-    _departureCityController.clear();
-    _destinationCityController.clear();
-    _departureTimeController.clear();
-    _arrivalTimeController.clear();
+    _customerIdController.clear();
+    _flightIdController.clear();
+    _flightDateController.clear();
+    _reservationNameController.clear();
     setState(() {
-      _selectedFlight = null;
+      _selectedReservation = null;
       _isAddingNew = false;
     });
   }
 
-  /// Shows a dialog asking whether to copy previous flight data or start blank.
+  /// Shows a dialog asking whether to copy previous reservation data or start blank.
   ///
   /// This implements the assignment requirement for users to have a choice
-  /// to copy fields from the previous flight or start with a blank page,
-  /// as specified in the flight topic requirements.
+  /// to copy fields from the previous reservation or start with a blank page,
+  /// as specified in the reservation topic requirements.
   void _showCopyDataDialog() {
     final localizations = AppLocalizations.of(context);
     showDialog(
@@ -250,7 +273,7 @@ class _FlightsPageState extends State<FlightsPage> {
         return AlertDialog(
           title: Text(localizations?.translate('copy_previous_data') ?? 'Copy Previous Data'),
           content: Text(localizations?.translate('copy_previous_question') ??
-              'Would you like to copy fields from the previous flight or start with a blank page?'),
+              'Would you like to copy fields from the previous reservation or start with a blank page?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -262,7 +285,7 @@ class _FlightsPageState extends State<FlightsPage> {
             ),
             TextButton(
               onPressed: () {
-                _loadPreviousFlightData();
+                _loadPreviousReservationData();
                 setState(() => _isAddingNew = true);
                 Navigator.of(context).pop();
               },
@@ -280,22 +303,23 @@ class _FlightsPageState extends State<FlightsPage> {
   /// "ActionBar with ActionItems that displays an AlertDialog
   /// with instructions for how to use the interface"
   ///
-  /// Includes guidance on adding, editing, deleting flights,
-  /// using the copy previous data feature, and time format examples.
+  /// Includes guidance on adding, editing, deleting reservations,
+  /// using the copy previous data feature, and ID/date format examples.
   void _showHelpDialog() {
     final localizations = AppLocalizations.of(context);
     _showAlertDialog(
-      localizations?.translate('help') ?? 'Flight Management Help',
+      localizations?.translate('help') ?? 'Reservation Management Help',
       localizations?.translate('help_content') ??
           'Instructions:\n\n'
-              '• Tap "+" to add a new flight route\n'
+              '• Tap "+" to add a new reservation\n'
               '• Fill out all required fields\n'
-              '• Select a flight from the list to view/edit details\n'
+              '• Select a reservation from the list to view/edit details\n'
               '• Use Update button to save changes\n'
-              '• Use Delete button to remove flight\n'
+              '• Use Delete button to cancel reservation\n'
               '• Choose to copy previous data or start blank\n\n'
-              'Time Format: Use 24-hour format (e.g., 14:30)\n'
-              'Cities: Enter full city names (e.g., London, New York)',
+              'Note: Customer ID and Flight ID must reference existing records\n'
+              'Date Format: YYYY-MM-DD (e.g., 2025-07-15)\n'
+              'Reservation Name: e.g., "Summer Holiday", "Business Trip"',
     );
   }
 
@@ -410,11 +434,11 @@ class _FlightsPageState extends State<FlightsPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(localizations?.translate('flight_management') ?? 'Flight Management'),
+        title: Text(localizations?.translate('reservation_management') ?? 'Reservation Management'),
         centerTitle: true,
         actions: [
           // Back button for phone layout when viewing details
-          if ((_selectedFlight != null || _isAddingNew) && !isTabletLayout)
+          if ((_selectedReservation != null || _isAddingNew) && !isTabletLayout)
             IconButton(
               icon: const Icon(Icons.arrow_back),
               onPressed: _closeDetails,
@@ -437,7 +461,7 @@ class _FlightsPageState extends State<FlightsPage> {
           ? _buildTabletLayout()
           : _buildPhoneLayout(),
       // FloatingActionButton shows only when not editing
-      floatingActionButton: (_selectedFlight == null && !_isAddingNew)
+      floatingActionButton: (_selectedReservation == null && !_isAddingNew)
           ? FloatingActionButton(
         onPressed: _showCopyDataDialog,
         child: const Icon(Icons.add),
@@ -447,7 +471,7 @@ class _FlightsPageState extends State<FlightsPage> {
   }
 
   /// Builds the tablet and desktop layout with side-by-side master-detail view.
-  /// Shows the flight list on the left and the form on the right,
+  /// Shows the reservation list on the left and the form on the right,
   /// providing an efficient workflow for larger screens.
   Widget _buildTabletLayout() {
     final localizations = AppLocalizations.of(context);
@@ -462,11 +486,11 @@ class _FlightsPageState extends State<FlightsPage> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  '${localizations?.translate('flights_count') ?? 'Flights'} (${_flights.length})',
+                  '${localizations?.translate('reservations_count') ?? 'Reservations'} (${_reservations.length})',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
               ),
-              Expanded(child: _buildFlightList()),
+              Expanded(child: _buildReservationList()),
             ],
           ),
         ),
@@ -482,7 +506,7 @@ class _FlightsPageState extends State<FlightsPage> {
                 ),
               ),
             ),
-            child: _buildFlightForm(),
+            child: _buildReservationForm(),
           ),
         ),
       ],
@@ -490,12 +514,12 @@ class _FlightsPageState extends State<FlightsPage> {
   }
 
   /// Builds the phone layout with full-screen switching between list and details.
-  /// On phones, this shows either the flight list or the form in full screen,
+  /// On phones, this shows either the reservation list or the form in full screen,
   /// switching between them based on the current state.
   Widget _buildPhoneLayout() {
-    if (_selectedFlight != null || _isAddingNew) {
+    if (_selectedReservation != null || _isAddingNew) {
       // Show form page in full screen
-      return _buildFlightForm();
+      return _buildReservationForm();
     } else {
       // Show list page
       return Column(
@@ -503,30 +527,29 @@ class _FlightsPageState extends State<FlightsPage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              '${AppLocalizations.of(context)?.translate('flights_count') ?? 'Flights'} (${_flights.length})',
+              '${AppLocalizations.of(context)?.translate('reservations_count') ?? 'Reservations'} (${_reservations.length})',
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
-          Expanded(child: _buildFlightList()),
+          Expanded(child: _buildReservationList()),
         ],
       );
     }
   }
 
-  /// Builds the flight form widget implementing Requirements 2 and 6.
+  /// Builds the reservation form widget implementing Requirements 2 and 6.
   ///
-  /// Creates a scrollable form with TextFields for flight data entry
+  /// Creates a scrollable form with TextFields for reservation data entry
   /// and appropriate action buttons based on the current mode
-  /// (add new flight vs. edit existing flight).
+  /// (add new reservation vs. edit existing reservation).
   ///
-  /// Form includes all required fields for flight topic:
-  /// - Departure city with examples
-  /// - Destination city with examples
-  /// - Departure time in 24-hour format
-  /// - Arrival time in 24-hour format
-  Widget _buildFlightForm() {
+  /// Form includes all required fields for reservation topic:
+  /// - Customer ID with numeric validation
+  /// - Flight ID with numeric validation
+  /// - Flight date in YYYY-MM-DD format
+  /// - Reservation name with examples
+  Widget _buildReservationForm() {
     final localizations = AppLocalizations.of(context);
-
     return SingleChildScrollView(
       child: Card(
         margin: const EdgeInsets.all(16),
@@ -537,47 +560,49 @@ class _FlightsPageState extends State<FlightsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                (_selectedFlight == null || _isAddingNew)
-                    ? (localizations?.translate('add_new_flight') ?? 'Add New Flight')
-                    : (localizations?.translate('edit_flight') ?? 'Edit Flight'),
+                (_selectedReservation == null || _isAddingNew)
+                    ? (localizations?.translate('create_new_reservation') ?? 'Create New Reservation')
+                    : (localizations?.translate('edit_reservation') ?? 'Edit Reservation'),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _departureCityController,
+                controller: _customerIdController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: localizations?.translate('departure_city') ?? 'Departure City',
-                  hintText: 'e.g., London',
+                  labelText: localizations?.translate('customer_id') ?? 'Customer ID',
+                  hintText: 'Enter customer ID number',
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: _destinationCityController,
+                controller: _flightIdController,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: localizations?.translate('destination_city') ?? 'Destination City',
-                  hintText: 'e.g., New York',
+                  labelText: localizations?.translate('flight_id') ?? 'Flight ID',
+                  hintText: 'Enter flight ID number',
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: _departureTimeController,
+                controller: _flightDateController,
                 decoration: InputDecoration(
-                  labelText: localizations?.translate('departure_time') ?? 'Departure Time',
-                  hintText: 'e.g., 14:30',
+                  labelText: localizations?.translate('flight_date') ?? 'Flight Date',
+                  hintText: 'YYYY-MM-DD (e.g., 2025-07-15)',
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: _arrivalTimeController,
+                controller: _reservationNameController,
                 decoration: InputDecoration(
-                  labelText: localizations?.translate('arrival_time') ?? 'Arrival Time',
-                  hintText: 'e.g., 18:45',
+                  labelText: localizations?.translate('reservation_name') ?? 'Reservation Name',
+                  hintText: 'e.g., Summer Holiday, Business Trip',
                   border: const OutlineInputBorder(),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
@@ -587,12 +612,12 @@ class _FlightsPageState extends State<FlightsPage> {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  if (_selectedFlight == null || _isAddingNew) ...[
+                  if (_selectedReservation == null || _isAddingNew) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _addFlight,
-                        child: Text(localizations?.translate('submit') ?? 'Submit'),
+                        onPressed: _addReservation,
+                        child: Text(localizations?.translate('submit') ?? 'Create Reservation'),
                       ),
                     ),
                     ElevatedButton(
@@ -603,17 +628,17 @@ class _FlightsPageState extends State<FlightsPage> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _updateFlight,
+                        onPressed: _updateReservation,
                         child: Text(localizations?.translate('update') ?? 'Update'),
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: _deleteFlight,
+                      onPressed: _deleteReservation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
                       ),
-                      child: Text(localizations?.translate('delete') ?? 'Delete'),
+                      child: Text(localizations?.translate('delete') ?? 'Cancel'),
                     ),
                     ElevatedButton(
                       onPressed: _clearForm,
@@ -629,53 +654,56 @@ class _FlightsPageState extends State<FlightsPage> {
     );
   }
 
-  /// Builds the flight list widget implementing Requirement 1.
+  /// Builds the reservation list widget implementing Requirement 1.
   ///
-  /// Displays a scrollable ListView of flights using ListView.builder()
+  /// Displays a scrollable ListView of reservations using ListView.builder()
   /// as demonstrated in the course slides. Shows loading indicator when
-  /// data is being fetched, and an empty state message when no flights exist.
+  /// data is being fetched, and an empty state message when no reservations exist.
   ///
-  /// Each list item is a Card with flight information that can be tapped
-  /// to select and edit the flight details (Requirement 4).
-  Widget _buildFlightList() {
+  /// Each list item is a Card with reservation information that can be tapped
+  /// to select and edit the reservation details (Requirement 4).
+  Widget _buildReservationList() {
     final localizations = AppLocalizations.of(context);
 
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
-    if (_flights.isEmpty) {
+    if (_reservations.isEmpty) {
       return Center(
         child: Text(
-          localizations?.translate('no_flights_found') ?? 'No flights found. Add a flight to get started.',
+          localizations?.translate('no_reservations_found') ?? 'No reservations found. Create a reservation to get started.',
           style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
       );
     }
-
     return ListView.builder(
-      itemCount: _flights.length,
+      itemCount: _reservations.length,
       itemBuilder: (context, index) {
-        final flight = _flights[index];
-        final isSelected = _selectedFlight?.id == flight.id;
-
+        final reservation = _reservations[index];
+        final isSelected = _selectedReservation?.id == reservation.id;
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           color: isSelected ? Colors.blue.shade50 : null,
           child: ListTile(
-            leading: const Icon(Icons.flight_takeoff, color: Colors.green),
-            title: Text('${flight.departureCity} → ${flight.destinationCity}'),
-            subtitle: Text('${localizations?.translate('depart') ?? 'Depart'}: ${flight.departureTime} • ${localizations?.translate('arrive') ?? 'Arrive'}: ${flight.arrivalTime}'),
-            trailing: const Icon(Icons.flight_land, color: Colors.red),
+            leading: const Icon(Icons.book_online, color: Colors.purple),
+            title: Text(reservation.reservationName),
+            subtitle: Text(
+              '${localizations?.translate('customer') ?? 'Customer'}: ${reservation.customerId} • ${localizations?.translate('flight') ?? 'Flight'}: ${reservation.flightId}\n'
+                  '${localizations?.translate('date') ?? 'Date'}: ${reservation.flightDate}',
+            ),
+            trailing: Icon(
+              Icons.event,
+              color: Colors.orange.shade700,
+            ),
             onTap: () {
               setState(() {
-                _selectedFlight = flight;
+                _selectedReservation = reservation;
                 _isAddingNew = false;
               });
-              _departureCityController.text = flight.departureCity;
-              _destinationCityController.text = flight.destinationCity;
-              _departureTimeController.text = flight.departureTime;
-              _arrivalTimeController.text = flight.arrivalTime;
+              _customerIdController.text = reservation.customerId.toString();
+              _flightIdController.text = reservation.flightId.toString();
+              _flightDateController.text = reservation.flightDate;
+              _reservationNameController.text = reservation.reservationName;
             },
           ),
         );

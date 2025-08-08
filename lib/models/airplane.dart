@@ -1,7 +1,8 @@
 import 'package:floor/floor.dart';
 
-/// Represents an Airplane entity in the database
-/// Contains fields for airplane type, passenger capacity, max speed, and range distance
+/// Airplane data model representing an aircraft in the airline fleet
+/// This model handles airplane information including specifications
+/// and provides serialization methods for database storage
 @entity
 class Airplane {
   @PrimaryKey(autoGenerate: true)
@@ -12,12 +13,13 @@ class Airplane {
   final String rangeDistance;
 
 
-  /// Constructor for Airplane
-  /// [id] - Optional ID for the airplane, auto-generated if null
-  /// [airplaneType] - Type of the airplane (e.g., "Boeing 747")
-  /// [passengers] - Number of passengers the airplane can carry
-  /// [maxSpeed] - Maximum speed of the airplane (e.g., "900 km/h")
-  /// [rangeDistance] - Maximum range of the airplane (e.g., "10000 km")
+  /// Creates a new Airplane instance
+  ///
+  /// [id] - Unique identifier (null for new airplanes, Floor will auto-assign)
+  /// [airplaneType] - Type of aircraft (e.g., Boeing 777, Airbus A350)
+  /// [passengers] - Maximum passenger capacity
+  /// [maxSpeed] - Maximum speed of the aircraft
+  /// [rangeDistance] - Maximum flight range
   Airplane({
     this.id,
     required this.airplaneType,
@@ -26,14 +28,8 @@ class Airplane {
     required this.rangeDistance,
   });
 
-  /// Converts Airplane object to a Map for database storage
-  /// Returns a Map with keys matching the database column names
-  /// [id] - ID of the airplane
-  /// [airplaneType] - Type of the airplane
-  /// [passengers] - Number of passengers
-  /// [maxSpeed] - Maximum speed of the airplane
-  /// [rangeDistance] - Maximum range of the airplane
-  /// This method is used to convert the Airplane object into a format suitable for database storage.
+  /// Converts Airplane object to Map for database storage
+  /// Returns a Map<String, dynamic> suitable for database operations
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -44,7 +40,10 @@ class Airplane {
     };
   }
 
-  /// Creates an Airplane object from a Map
+  /// Creates Airplane object from database Map
+  ///
+  /// [map] - Map containing airplane data from database
+  /// Returns an Airplane instance with populated fields
   factory Airplane.fromMap(Map<String, dynamic> map) {
     return Airplane(
       id: map['id'],
@@ -55,7 +54,7 @@ class Airplane {
     );
   }
 
-  /// Creates a copy of the Airplane object with optional new values
+  /// Creates a copy of this airplane
   Airplane copyWith({
     int? id,
     String? airplaneType,
@@ -72,15 +71,13 @@ class Airplane {
     );
   }
 
-  /// Converts the Airplane object to a string representation
-  /// Useful for debugging and logging
+  /// String representation of airplane
   @override
   String toString() {
     return 'Airplane{id: $id, airplaneType: $airplaneType, passengers: $passengers, maxSpeed: $maxSpeed, rangeDistance: $rangeDistance}';
   }
 
-  /// Checks if two Airplane objects are equal
-  /// Compares all fields except ID for equality
+  /// Equality comparison
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -92,8 +89,7 @@ class Airplane {
         other.rangeDistance == rangeDistance;
   }
 
-  /// Generates a hash code for the Airplane object
-  /// Used for collections and comparisons
+  /// Hash code for airplane
   @override
   int get hashCode {
     return id.hashCode ^
